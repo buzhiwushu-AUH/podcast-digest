@@ -13,7 +13,7 @@ flowchart LR
 如果上面的图没有显示，流程就是：
 
 ```text
-小宇宙播客 -> 抓取音频 -> Deepgram 转文字 ->
+小宇宙播客 -> 抓取音频 -> Deepgram 转文字 -> AI 生成摘要 -> Resend 发邮件
 ```
 
 ---
@@ -51,10 +51,9 @@ AI 后端目前支持：
 - `gemini`
 - `ollama`
 
-如果你只有 Codex、没有 Claude Code 或其他 AI端。前提是你的电脑上已经安装并登录了 CodexCLI。注意：`codex` 只负责“生成摘要”这一步；转文字仍然需要 Deepgram，发邮件仍然需要 Resend。
+如果你只有 Codex、没有 Claude Code 或其他 AI API key，可以选择 `codex` 后端。前提是你的电脑上已经安装并登录了 Codex CLI。注意：`codex` 只负责“生成摘要”这一步；转文字仍然需要 Deepgram，发邮件仍然需要 Resend。
 
-如果你用 GLM、Kimi、DeepSeek、Qwen 这类 OpenAI-compatible 服务，选择 `openai` 后端，然后在 `config.sh` 里填写对应的
-`OPENAI_BASE_URL`、`OPENAI_API_KEY` 和 `OPEN
+如果你用 GLM、Kimi、DeepSeek、Qwen 这类 OpenAI-compatible 服务，选择 `openai` 后端，然后在 `config.sh` 里填写对应的 `OPENAI_BASE_URL`、`OPENAI_API_KEY` 和 `OPENAI_MODEL`。
 
 ---
 
@@ -96,7 +95,7 @@ export DEEPGRAM_KEY="your_deepgram_api_key"
 
 ## 完整邮件摘要：配置频道和邮件
 
-如果你要让它追踪播客并自动发摘要邮件，继续配
+如果你要让它追踪播客并自动发摘要邮件，继续配置下面几项。
 
 ### 1. 配置 `config.sh`
 
@@ -118,7 +117,7 @@ export LLM_BACKEND="claude"
 export LLM_BACKEND="codex"
 ```
 
-这会调用本机的 `codex exec` 来生成摘要，不需你已经在本机登录 Codex。
+这会调用本机的 `codex exec` 来生成摘要，不需要额外填写 AI API key，但需要你已经在本机登录 Codex。
 Deepgram 和 Resend 仍然必须配置，因为它们分别负责转文字和发邮件。
 
 如果你不用本地 Claude Code，而是用 OpenAI 或 OpenAI-compatible 服务，可以这样：
@@ -150,7 +149,7 @@ https://www.xiaoyuzhoufm.com/podcast/xxxxxxxxxxxxxxxxxxxxxxxx
 
 ### 3. 第一次先 seed
 
-第一次运行建议先 seed，把当前最新节目记为已
+第一次运行建议先 seed，把当前最新节目记为已读，避免一上来处理一堆旧节目：
 
 ```bash
 ./digest.sh --seed
@@ -162,7 +161,7 @@ https://www.xiaoyuzhoufm.com/podcast/xxxxxxxxxxxxxxxxxxxxxxxx
 ./digest.sh
 ```
 
-之后每次有新节目，再运行这条命令，它就会转写
+之后每次有新节目，再运行这条命令，它就会转写、生成摘要并发邮件。
 
 ---
 
@@ -170,9 +169,9 @@ https://www.xiaoyuzhoufm.com/podcast/xxxxxxxxxxxxxxxxxxxxxxxx
 
 | 我想做什么 | 命令 |
 |---|---|
-| 标记当前最新节目为已读 | `./digest.sh --se
+| 标记当前最新节目为已读 | `./digest.sh --seed` |
 | 正常处理新节目 | `./digest.sh` |
-| 强制处理某个播客的最新一期 | `./digest.sh
+| 强制处理某个播客的最新一期 | `./digest.sh --force <播客ID>` |
 | 只转写某一期节目 | `./fetch_transcript.sh <单集网址>` |
 
 ---
@@ -200,15 +199,15 @@ codex exec
 ```
 
 `codex` 后端适合已经安装并登录 Codex、但没有 Claude Code 或其他 AI API key 的用户。
-它只替代 AI 摘要后端，不替代 Deepgram 或 Res
+它只替代 AI 摘要后端，不替代 Deepgram 或 Resend。
 
 API 和本地模型后端走 `llm_call.py`：
 
 | 后端 | 需要配置 |
 |---|---|
-| `anthropic` | `ANTHROPIC_API_KEY`, `ANTHRO
+| `anthropic` | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` |
 | `openai` | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL` |
-| `gemini` | `GEMINI_API_KEY`, `GEMINI_MODEL
+| `gemini` | `GEMINI_API_KEY`, `GEMINI_MODEL` |
 | `ollama` | `OLLAMA_HOST`, `OLLAMA_MODEL` |
 
 ---
@@ -218,13 +217,13 @@ API 和本地模型后端走 `llm_call.py`：
 复制 launchd 配置：
 
 ```bash
-cp launchd/com.podcast-digest.plist.example dcast-digest.plist
+cp launchd/com.podcast-digest.plist.example ~/Library/LaunchAgents/com.podcast-digest.plist
 ```
 
 编辑这个 plist 文件，把里面的 `__REPO__` 和 `__HOME__` 换成你的真实路径，然后启用：
 
 ```bash
-launchctl bootstrap gui/$(id -u) ~/Library/Lt.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.podcast-digest.plist
 ```
 
 Linux 用户可以用 cron 调度 `digest.sh`。
@@ -234,7 +233,7 @@ Linux 用户可以用 cron 调度 `digest.sh`。
 ## 隐私和限制
 
 - `config.sh`、`custom_layer.txt` 和 `.state.json` 不应提交到 Git 仓库。
-- Deepgram、Resend、OpenAI 等服务可能产生用
+- Deepgram、Resend、OpenAI 等服务可能产生用量费用，请以各自官网为准。
 - 机器转写不一定完美，中文播客可能会有同音字或说话人识别错误。
 - 这是个人自动化工具，不是生产级服务。
 
