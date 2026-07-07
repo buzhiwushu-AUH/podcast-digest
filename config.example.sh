@@ -11,6 +11,7 @@ export RESEND_KEY="your_resend_api_key"
 # Which engine turns the transcript into the digest. Everything else (fetching,
 # Deepgram transcription, Resend email) is independent of this choice.
 #   claude    = local `claude` CLI (Claude Code); no key needed here
+#   codex     = local `codex` CLI; no API key here, but Codex must be logged in
 #   anthropic = Anthropic API directly (no CLI)
 #   openai    = OpenAI API, or any OpenAI-compatible endpoint (OpenRouter, Together, ...)
 #   gemini    = Google Gemini API
