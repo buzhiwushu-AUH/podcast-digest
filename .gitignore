@@ -1,0 +1,10 @@
+# secrets & personal config — never commit
+config.sh
+.state.json
+custom_layer.txt
+
+# runtime
+*.log
+logs/
+podcast-digests/
+/tmp/

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- macOS LaunchAgent: run the daily digest at 09:00 local time.
+     1. Replace __REPO__ with the absolute path to this repo
+        (e.g. /Users/you/podcast-digest).
+     2. Replace __HOME__/.local/bin with the dir that contains the `claude` CLI
+        (run `command -v claude` to find it).
+     3. Copy to ~/Library/LaunchAgents/com.podcast-digest.plist
+     4. Load:  launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.podcast-digest.plist
+        Unload: launchctl bootout   gui/$(id -u)/com.podcast-digest -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.podcast-digest</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/digest.sh</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>__HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+  <key>RunAtLoad</key><false/>
+  <key>StandardOutPath</key><string>__REPO__/logs/launchd.out.log</string>
+  <key>StandardErrorPath</key><string>__REPO__/logs/launchd.err.log</string>
+</dict>
+</plist>

@@ -1,0 +1,13 @@
+CUSTOM LAYER (example — replace with your own instructions)
+
+Copy this file to `custom_layer.txt`, point CUSTOM_LAYER_FILE at it in config.sh, and
+flag the channels you want it applied to as `custom` in channels.tsv.
+
+Whatever you write here is appended to the digest prompt for those channels, so the model
+adds one extra section at the end. Keep any private/domain-specific logic here — it is
+gitignored and never leaves your machine.
+
+Example instruction:
+  Add a final <h3>Key takeaways</h3> section with 2-3 concrete bullet points relevant to
+  <your topic/domain>. Only include it when the episode is actually relevant; otherwise
+  write "Not relevant this episode."
