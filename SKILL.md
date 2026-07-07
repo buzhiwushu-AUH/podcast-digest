@@ -1,3 +1,4 @@
+---
 name: podcast-digest
 description: Turn Xiaoyuzhou podcast episodes into email digests using Deepgram, an LLM backend, and Resend. Use when the user wants to set up, run, schedule, or debug podcast digests.
 metadata:
