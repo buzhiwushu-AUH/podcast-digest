@@ -26,6 +26,15 @@ log(){ echo "[$(date '+%F %T')] $*"; }
 get_state(){ python3 -c "import json;print(json.load(open('$STATE_FILE')).get('$1',''))" 2>/dev/null; }
 set_state(){ python3 -c "import json;d=json.load(open('$STATE_FILE'));d['$1']='$2';json.dump(d,open('$STATE_FILE','w'))"; }
 
+# generate_digest <instructions>  —  content on stdin, digest text on stdout.
+# `claude` uses the local Claude Code CLI; every other backend goes through llm_call.py.
+generate_digest(){
+  case "${LLM_BACKEND:-claude}" in
+    claude) claude -p "$1" ;;
+    *)      python3 "$SELF/llm_call.py" "$1" ;;
+  esac
+}
+
 process(){
   local name="$1" pid="$2" flag="$3" force="${4:-}"
   local phtml epid
@@ -70,7 +79,7 @@ PY
 
   local html
   html=$( { printf 'Title: %s\nPublished: %s\n\n[Machine transcript]\n' "$title" "$pub"; cat "$W/transcript.txt"; } \
-    | claude -p "$(cat "$SELF/prompts/digest_prompt.txt")$custom" 2>>"$LOGDIR/claude.err" )
+    | generate_digest "$(cat "$SELF/prompts/digest_prompt.txt")$custom" 2>>"$LOGDIR/llm.err" )
   html=$(printf '%s' "$html" | sed -E '/^```/d')
   [ -n "$html" ] || { log "[$name] empty digest, skip send"; rm -rf "$W"; return; }
 

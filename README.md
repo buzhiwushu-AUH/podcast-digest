@@ -16,14 +16,17 @@ Every episode arrives as: **A. Summary · B. Outline · C. Quotes · D. Transcri
 - **No local speech-to-text.** Deepgram transcribes directly from the episode's audio
   URL, so there's nothing heavy to install.
 - **The audio URL is read straight from the episode page** (`og:audio`) — no scraping hacks.
-- **The digest is written by the `claude` CLI** you already have, in headless mode.
+- **The digest is written by whichever LLM you pick** — the `claude` CLI in headless
+  mode by default, or any of OpenAI / Anthropic / Gemini / Ollama.
 - **Scheduling is plain `launchd`/cron.** State is a tiny JSON file, so it only ever
   processes genuinely new episodes.
 
 ## Requirements
 
 - macOS or Linux, `bash`, `curl`, `python3` (stdlib only)
-- [`claude`](https://docs.claude.com/en/docs/claude-code) CLI (Claude Code), authenticated
+- An **LLM backend** for the digest step — the local [`claude`](https://docs.claude.com/en/docs/claude-code)
+  CLI (Claude Code) by default, or OpenAI / Anthropic API / Gemini / Ollama
+  ([see below](#choose-your-llm-backend))
 - A [Deepgram](https://console.deepgram.com) API key (free credit)
 - A [Resend](https://resend.com) API key (free tier)
 
@@ -53,6 +56,22 @@ chmod +x digest.sh fetch_transcript.sh
 ./digest.sh --force <id>    # force-process a channel's latest (good for a test run)
 ./fetch_transcript.sh <episode_url>   # just transcribe one episode to a text file
 ```
+
+## Choose your LLM backend
+
+Only the **digest-writing** step uses an LLM; fetching, transcription (Deepgram) and
+email (Resend) are model-agnostic. Pick a backend in `config.sh` via `LLM_BACKEND`:
+
+| `LLM_BACKEND` | What it uses | Notes |
+|---|---|---|
+| `claude` (default) | local `claude` CLI (Claude Code) | no extra key; reuses your Claude Code auth |
+| `anthropic` | Anthropic API directly | set `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` |
+| `openai` | OpenAI **or any OpenAI-compatible** API | set `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL` (works with OpenRouter, Together, etc.) |
+| `gemini` | Google Gemini API | set `GEMINI_API_KEY`, `GEMINI_MODEL` |
+| `ollama` | a local model via [Ollama](https://ollama.com) | offline & free; set `OLLAMA_MODEL` |
+
+Everything else stays the same. Non-`claude` backends are called through `llm_call.py`
+(standard library only — no pip installs).
 
 ## Schedule it (daily, macOS)
 

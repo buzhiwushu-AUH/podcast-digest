@@ -7,6 +7,30 @@ export DEEPGRAM_KEY="your_deepgram_api_key"
 # Resend (email delivery): https://resend.com  (free tier)
 export RESEND_KEY="your_resend_api_key"
 
+# --- LLM backend (writes the digest) ---
+# Which engine turns the transcript into the digest. Everything else (fetching,
+# Deepgram transcription, Resend email) is independent of this choice.
+#   claude    = local `claude` CLI (Claude Code); no key needed here
+#   anthropic = Anthropic API directly (no CLI)
+#   openai    = OpenAI API, or any OpenAI-compatible endpoint (OpenRouter, Together, ...)
+#   gemini    = Google Gemini API
+#   ollama    = local model via Ollama (offline, free)
+export LLM_BACKEND="claude"
+
+# anthropic
+export ANTHROPIC_API_KEY=""
+export ANTHROPIC_MODEL="claude-sonnet-4-6"
+# openai (or any OpenAI-compatible endpoint)
+export OPENAI_API_KEY=""
+export OPENAI_MODEL="gpt-4o"
+export OPENAI_BASE_URL="https://api.openai.com/v1"
+# gemini
+export GEMINI_API_KEY=""
+export GEMINI_MODEL="gemini-2.0-flash"
+# ollama (local, offline, free)
+export OLLAMA_HOST="http://localhost:11434"
+export OLLAMA_MODEL="qwen2.5:14b"
+
 # --- Email ---
 # Where digests are sent.
 RECIPIENT_EMAIL="you@example.com"
