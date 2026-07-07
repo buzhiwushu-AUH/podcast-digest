@@ -1,4 +1,3 @@
----
 name: podcast-digest
 description: Turn Xiaoyuzhou podcast episodes into email digests using Deepgram, an LLM backend, and Resend. Use when the user wants to set up, run, schedule, or debug podcast digests.
 metadata:
@@ -20,7 +19,15 @@ Use this skill when the user wants to turn Xiaoyuzhou podcast episodes into emai
 Name<TAB>xiaoyuzhou_podcast_id<TAB>plain
 ```
 
-For Codex-only users, use the OpenAI backend:
+For Codex-only users with the Codex CLI installed and logged in, use the Codex backend:
+
+```bash
+export LLM_BACKEND="codex"
+```
+
+This only replaces the digest-writing LLM backend. Transcript generation still requires `DEEPGRAM_KEY`, and email delivery still requires Resend configuration.
+
+If the user prefers an API key or does not have a working Codex CLI login, use the OpenAI-compatible backend:
 
 ```bash
 export LLM_BACKEND="openai"
@@ -57,4 +64,4 @@ Fetch transcript only:
 
 ## Notes
 
-The `claude` backend requires Claude Code CLI. Codex-only users should use `openai`, `ollama`, or another OpenAI-compatible backend.
+The `claude` backend requires Claude Code CLI. The `codex` backend requires a working local Codex CLI login. Users can also use `openai`, `ollama`, or another OpenAI-compatible backend.
