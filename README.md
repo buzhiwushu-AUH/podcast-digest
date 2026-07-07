@@ -1,112 +1,217 @@
 # podcast-digest · 播客摘要小助手
 
-自动追你订阅的小宇宙播客，把每期节目**转成文字 → 用 AI 出摘要 → 发到你邮箱**。来不及听，也能看完。
+自动追你订阅的小宇宙播客，把每期节目转成文字，再用 AI 生成摘要，并发送到你的邮箱。
 
 ```mermaid
 flowchart LR
-    A["🎙️ 小宇宙播客<br/>(你订阅的节目)"] --> B["📝 Deepgram<br/>音频转文字"]
-    B --> C["🤖 AI 大脑<br/>Claude / GLM / K
-    C --> D["📧 Resend<br/>发到你邮箱"]
+    A["小宇宙播客<br/>节目页面"] --> B["抓取音频地址"]
+    B --> C["Deepgram<br/>音频转文字"]
+    C --> D["AI 后端<br/>生成摘要"]
+    D --> E["Resend<br/>发送邮件"]
 ```
 
-> 看不到图？流程就是一句话：**播客 → 转文字( (Resend)**。
+如果上面的图没有显示，流程就是：
+
+```text
+小宇宙播客 -> 抓取音频 -> Deepgram 转文字 -> AI 生成摘要 -> Resend 发邮件
+```
 
 ---
 
-## ⚠️ 开跑前，你要先准备这些（缺一不可）
+## 开始前要准备什么
 
-这不是一个"下载就能用"的软件——它要**借用几个 面这几把「钥匙」（APIkey），再往下走。它们都是**去官网注册账号、复制一串 key**，不用在电脑上装东西。
+这个项目不是下载后就能直接跑。它会调用几个在线服务，所以你需要先准备对应的 API key。
 
-| 你要准备 | 干嘛用的 | 去哪拿 |
-|---|---|---|
-| **① Deepgram 的 key** | 把播客音频转成文字 | deepgram.com 注册后拿 API key |
-| **② Resend 的 key** | 把摘要发到你邮箱 | r 一次要绑一个发信邮箱/域名，按它引导走） |
-| **③ AI 大脑的 key** | 生成摘要 | 看你用哪家：Claude / OpenAI / GLM / Kimi 等，各自官网拿 |
+### 只想转文字
 
-> 💡 **第 ③ 把可以省掉**——如果你电脑上已经装了 Claude Code，用本地模式就不用额外的 AI key
-了。怎么弄见文末【最省事那条路】。
+如果你只想把某一期小宇宙节目转成文字，需要：
 
-> 这几家都有**免费额度**，个人试用一般够用； 为准。
+- macOS 或 Linux
+- `bash`
+- `curl`
+- `python3`
+- 一个 Deepgram API key
 
-另外你电脑上要有：`bash`、`curl`、`python3`
+Deepgram 用来把音频转成文字。你需要去 Deepgram 官网注册账号，然后创建 API key。
+
+### 想要完整邮件摘要
+
+如果你想自动完成“转文字 -> 生成摘要 -> 发邮件”，还需要：
+
+- 一个 Resend API key
+- 一个可以发信的 Resend 发件邮箱或已验证域名
+- 一个 AI 后端
+
+AI 后端目前支持：
+
+- `claude`
+- `anthropic`
+- `openai`
+- `gemini`
+- `ollama`
+
+如果你用 GLM、Kimi、DeepSeek、Qwen 这类 OpenAI-compatible 服务，选择 `openai` 后端，然后在 `config.sh` 里填写对应的 `OPENAI_BASE_URL`、`OPENAI_API_KEY` 和 `OPENAI_MODEL`。
 
 ---
 
-## 🚀 上手步骤（照着一步步来）
+## 安装
 
-**第 1 步：把项目下载到本地**
 ```bash
 git clone <你的仓库地址> podcast-digest
 cd podcast-digest
-```
-
-**第 2 步：复制两个配置文件（把「示例」变成
-```bash
 cp config.example.sh config.sh
 cp channels.tsv.example channels.tsv
-```
-
-**第 3 步：让脚本可以运行**
-```bash
 chmod +x digest.sh fetch_transcript.sh
 ```
 
-**第 4 步：填 key —— 打开 `config.sh`，把这几项填上**
-- `DEEPGRAM_KEY`　→ 你的 Deepgram key
-- `RESEND_KEY`　　→ 你的 Resend key
-- `RECIPIENT_EMAIL`→ 摘要发到哪个邮箱（你自
-- `FROM_EMAIL`　　→ 用哪个邮箱发出（在 Resend 里配好的那个）
-- `LLM_BACKEND`　→ 选 AI 大脑：`claude`(默认ai` / `gemini` / `ollama`
-  （用 GLM、Kimi、DeepSeek 这类国产模型？选 `openai`，再按注释填对应的 key 和接口地址。）
+---
 
-**第 5 步：告诉它追哪些播客 —— 打开 `channels.tsv`，一行一个**
+## 只转文字：最快测试方式
 
-格式（用 Tab 键分隔，不是空格）：
+打开 `config.sh`，先只填 Deepgram：
+
+```bash
+export DEEPGRAM_KEY="your_deepgram_api_key"
 ```
-节目名称      播客ID  plain
-```
-> **怎么找播客 ID？** 在 xiaoyuzhoufm.com 打开那档节目，网址里 `xiaoyuzhoufm.com/podcast/<这串就是ID>`。
 
-**第 6 步：第一次先「打底」（把已有节目标记为已读，避免一上来发一大堆旧的）**
+然后运行：
+
+```bash
+./fetch_transcript.sh "https://www.xiaoyuzhoufm.com/episode/..."
+```
+
+转写结果会保存到：
+
+```text
+/tmp/podcast-digest/transcript.txt
+```
+
+这一步不需要 Resend，也不需要 AI key。
+
+---
+
+## 完整邮件摘要：配置频道和邮件
+
+如果你要让它追踪播客并自动发摘要邮件，继续配置下面几项。
+
+### 1. 配置 `config.sh`
+
+打开 `config.sh`，至少填写：
+
+```bash
+export DEEPGRAM_KEY="your_deepgram_api_key"
+export RESEND_KEY="your_resend_api_key"
+
+RECIPIENT_EMAIL="you@example.com"
+FROM_EMAIL="onboarding@resend.dev"
+
+export LLM_BACKEND="claude"
+```
+
+如果你不用本地 Claude Code，而是用 OpenAI 或 OpenAI-compatible 服务，可以这样：
+
+```bash
+export LLM_BACKEND="openai"
+export OPENAI_API_KEY="your_openai_or_compatible_key"
+export OPENAI_MODEL="gpt-4o"
+export OPENAI_BASE_URL="https://api.openai.com/v1"
+```
+
+### 2. 配置 `channels.tsv`
+
+一行一个节目，格式是：
+
+```text
+节目名称<TAB>播客ID<TAB>plain
+```
+
+这里的 `<TAB>` 是键盘上的 Tab 键，不是空格。
+
+小宇宙播客 ID 在节目页 URL 里。例如：
+
+```text
+https://www.xiaoyuzhoufm.com/podcast/xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+最后那串就是播客 ID。
+
+### 3. 第一次先 seed
+
+第一次运行建议先 seed，把当前最新节目记为已读，避免一上来处理一堆旧节目：
+
 ```bash
 ./digest.sh --seed
 ```
 
-**第 7 步：正式跑！**
+### 4. 正式运行
+
 ```bash
 ./digest.sh
 ```
-之后有新节目，再跑一次这条命令就会处理并发邮
+
+之后每次有新节目，再运行这条命令，它就会转写、生成摘要并发邮件。
 
 ---
 
-## 🛠️ 常用命令速查
+## 常用命令
 
-| 我想…… | 命令 |
+| 我想做什么 | 命令 |
 |---|---|
-| 第一次打底（标记旧节目为已读） | `./digest
-| 正常跑一遍（处理新节目、发邮件） | `./digest.sh` |
-| 强制处理某一档（测试用） | `./digest.sh --
-| 只想拿某一期的文字稿 | `./fetch_transcript.sh <单集网址>` |
+| 标记当前最新节目为已读 | `./digest.sh --seed` |
+| 正常处理新节目 | `./digest.sh` |
+| 强制处理某个播客的最新一期 | `./digest.sh --force <播客ID>` |
+| 只转写某一期节目 | `./fetch_transcript.sh <单集网址>` |
 
 ---
 
-## 😌 最省事那条路：本地 Claude，少配一把 key
+## AI 后端怎么选
 
-如果你电脑上**已经装了 Claude Code**，那 AI 那把 key（第 ③ 把）可以完全省掉：
+默认是：
 
-1. 在 `config.sh` 里把 `LLM_BACKEND` 设成 `claude`（这也是默认值）。
-2. 剩下只要备 **Deepgram + Resend** 两把 key
+```bash
+export LLM_BACKEND="claude"
+```
 
-这是新手阻力最小的走法——想省事就走这条。
+这会调用本机的 Claude Code CLI。如果你已经装好了 Claude Code，这是最省事的方式，不需要额外填写 AI API key。
+
+其他后端走 `llm_call.py`：
+
+| 后端 | 需要配置 |
+|---|---|
+| `anthropic` | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` |
+| `openai` | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL` |
+| `gemini` | `GEMINI_API_KEY`, `GEMINI_MODEL` |
+| `ollama` | `OLLAMA_HOST`, `OLLAMA_MODEL` |
 
 ---
 
-## ⏰ 想让它每天自动跑（macOS）
+## macOS 定时运行
+
+复制 launchd 配置：
 
 ```bash
 cp launchd/com.podcast-digest.plist.example ~/Library/LaunchAgents/com.podcast-digest.plist
 ```
-然后编辑这个 plist 文件，把里面的 `__REPO__` 和 `__HOME__` 换成你的真实路径，再启用：
+
+编辑这个 plist 文件，把里面的 `__REPO__` 和 `__HOME__` 换成你的真实路径，然后启用：
+
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.podcast-digest.plist
+```
+
+Linux 用户可以用 cron 调度 `digest.sh`。
+
+---
+
+## 隐私和限制
+
+- `config.sh`、`custom_layer.txt` 和 `.state.json` 不应提交到 Git 仓库。
+- Deepgram、Resend、OpenAI 等服务可能产生用量费用，请以各自官网为准。
+- 机器转写不一定完美，中文播客可能会有同音字或说话人识别错误。
+- 这是个人自动化工具，不是生产级服务。
+
+---
+
+## License
+
+MIT
