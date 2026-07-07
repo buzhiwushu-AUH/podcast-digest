@@ -1,5 +1,3 @@
- https://github.com/buzhiwushu-AUH/podcast-digest/edit/main/README.md
-
 # podcast-digest · 播客摘要小助手
 
 自动追你订阅的小宇宙播客，把每期节目转成文字，再用 AI 生成摘要，并发送到你的邮箱。
