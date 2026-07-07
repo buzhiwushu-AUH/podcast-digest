@@ -24,6 +24,16 @@ export ANTHROPIC_MODEL="claude-sonnet-4-6"
 export OPENAI_API_KEY=""
 export OPENAI_MODEL="gpt-4o"
 export OPENAI_BASE_URL="https://api.openai.com/v1"
+#   Many providers are OpenAI-compatible — keep LLM_BACKEND="openai", put your key in
+#   OPENAI_API_KEY, and switch OPENAI_BASE_URL / OPENAI_MODEL to one of these
+#   (verify the exact model name & URL in each provider's docs; they change):
+#     Zhipu GLM       BASE="https://open.bigmodel.cn/api/paas/v4"                  MODEL="glm-4.6"
+#     DeepSeek        BASE="https://api.deepseek.com"                              MODEL="deepseek-chat"
+#     Kimi / Moonshot BASE="https://api.moonshot.cn/v1"                            MODEL="moonshot-v1-8k"
+#     Qwen / DashScope BASE="https://dashscope.aliyuncs.com/compatible-mode/v1"    MODEL="qwen-plus"
+#     OpenRouter      BASE="https://openrouter.ai/api/v1"                          MODEL="<vendor>/<model>"
+#   Tip: China-hosted providers (GLM/DeepSeek/Kimi/Qwen) also avoid the VPN needed
+#   for OpenAI/Gemini from within mainland China.
 # gemini
 export GEMINI_API_KEY=""
 export GEMINI_MODEL="gemini-2.0-flash"

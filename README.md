@@ -73,6 +73,11 @@ email (Resend) are model-agnostic. Pick a backend in `config.sh` via `LLM_BACKEN
 Everything else stays the same. Non-`claude` backends are called through `llm_call.py`
 (standard library only — no pip installs).
 
+**Chinese / other providers work too.** Most are OpenAI-compatible, so just keep
+`LLM_BACKEND="openai"` and point `OPENAI_BASE_URL` / `OPENAI_MODEL` at them — presets for
+**Zhipu GLM, DeepSeek, Kimi (Moonshot), Qwen (DashScope)** and OpenRouter are listed in
+`config.example.sh`. (These are also China-hosted, so no VPN needed from the mainland.)
+
 ## Schedule it (daily, macOS)
 
 ```bash
