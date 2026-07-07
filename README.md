@@ -23,13 +23,19 @@ Every episode arrives as: **A. Summary · B. Outline · C. Quotes · D. Transcri
 
 ## Requirements
 
-- macOS or Linux, `bash`, `curl`, `python3` (stdlib only)
-- An **LLM backend** for the digest step — the local [`claude`](https://docs.claude.com/en/docs/claude-code)
-  CLI (Claude Code) by default, or OpenAI / Anthropic API / Gemini / Ollama
-  ([see below](#choose-your-llm-backend))
-- A [Deepgram](https://console.deepgram.com) API key (free credit)
-- A [Resend](https://resend.com) API key (free tier)
+Minimum for transcript only:
 
+- macOS or Linux
+- `bash`, `curl`, `python3` (stdlib only)
+- A [Deepgram](https://console.deepgram.com) API key
+
+For full email digests, also add:
+
+- An **LLM backend** for the digest step — local [`claude`](https://docs.claude.com/en/docs/claude-code)
+  CLI, OpenAI / OpenAI-compatible API, Anthropic API, Gemini, or Ollama
+- A [Resend](https://resend.com) API key
+- Sender and recipient email settings
+  
 ## Setup
 
 ```bash
@@ -38,6 +44,32 @@ cp config.example.sh config.sh          # then edit: keys, recipient email, outp
 cp channels.tsv.example channels.tsv    # then edit: the channels you want to watch
 chmod +x digest.sh fetch_transcript.sh
 ```
+
+### Transcript-only quick start
+
+If you only want to transcribe one Xiaoyuzhou episode, you only need `DEEPGRAM_KEY`.
+
+Edit `config.sh`:
+
+```bash
+export DEEPGRAM_KEY="your_deepgram_api_key"
+```
+
+Then run:
+
+```bash
+./fetch_transcript.sh "https://www.xiaoyuzhoufm.com/episode/..."
+```
+
+The transcript will be saved to:
+
+```text
+/tmp/podcast-digest/transcript.txt
+```
+
+### Full email digest setup
+
+For automatic summaries and email delivery, also fill in your LLM backend and Resend settings in `config.sh`.
 
 **Find a channel id:** open the show on xiaoyuzhoufm.com — the URL is
 `xiaoyuzhoufm.com/podcast/<id>`. Put that `<id>` in `channels.tsv`
