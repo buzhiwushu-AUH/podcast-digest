@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Watch a list of Xiaoyuzhou (小宇宙) channels; when a channel has a new episode,
-# transcribe it (Deepgram), turn it into a digest (headless `claude -p`), email it
+# transcribe it (Deepgram), turn it into a digest (LLM backend), email it
 # (Resend), optionally save it, and remember it (state file).
 #
 # Usage:
@@ -8,7 +8,7 @@
 #   ./digest.sh --seed          mark each channel's current latest as seen (no output)
 #   ./digest.sh --force <pid>   force-process a channel's latest, ignoring state (test)
 #
-# Deps: curl, python3, claude (Claude Code CLI). No ffmpeg/whisper.
+# Deps: curl, python3, and one configured LLM backend. No ffmpeg/whisper.
 
 set -uo pipefail
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,10 +27,28 @@ get_state(){ python3 -c "import json;print(json.load(open('$STATE_FILE')).get('$
 set_state(){ python3 -c "import json;d=json.load(open('$STATE_FILE'));d['$1']='$2';json.dump(d,open('$STATE_FILE','w'))"; }
 
 # generate_digest <instructions>  —  content on stdin, digest text on stdout.
-# `claude` uses the local Claude Code CLI; every other backend goes through llm_call.py.
+# `claude` and `codex` use local CLIs; API/local model backends go through llm_call.py.
 generate_digest(){
   case "${LLM_BACKEND:-claude}" in
     claude) claude -p "$1" ;;
+    codex)
+      local out
+      out="$(mktemp)"
+      {
+        printf 'You are the digest-writing step in podcast-digest.\n'
+        printf 'Return only the final digest content. Do not explain your process.\n\n'
+        printf 'DIGEST INSTRUCTIONS:\n%s\n\n' "$1"
+        printf 'EPISODE INPUT:\n'
+        cat
+      } | codex exec --skip-git-repo-check --sandbox read-only --output-last-message "$out" - >>"$LOGDIR/codex.out" 2>>"$LOGDIR/codex.err"
+      local status=$?
+      if [ "$status" -ne 0 ]; then
+        rm -f "$out"
+        return "$status"
+      fi
+      cat "$out"
+      rm -f "$out"
+      ;;
     *)      python3 "$SELF/llm_call.py" "$1" ;;
   esac
 }
@@ -69,7 +87,7 @@ open(sys.argv[2],'w',encoding='utf-8').write("\n".join(lines))
 PY
   local tsize; tsize=$(wc -m < "$W/transcript.txt" 2>/dev/null | tr -d ' '); tsize=${tsize:-0}
   [ "$tsize" -gt 100 ] || { log "[$name] transcript empty/short ($tsize), skip"; rm -rf "$W"; return; }
-  log "[$name] transcript ${tsize} chars; generating digest (claude)..."
+  log "[$name] transcript ${tsize} chars; generating digest (${LLM_BACKEND:-claude})..."
 
   # Optional custom layer, only for channels flagged 'custom'
   local custom=""
